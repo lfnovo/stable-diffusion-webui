@@ -1,0 +1,37 @@
+# Base image
+# FROM --platform=linux/amd64 nvidia/cuda:12.1.0-runtime-ubuntu22.04
+FROM --platform=linux/amd64 nvcr.io/nvidia/pytorch:23.07-py3
+# Set the timezone
+ENV TZ=America/Sao_Paulo
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
+    echo $TZ > /etc/timezone
+
+# Install system dependencies in a single layer
+# RUN apt-get update && apt-get upgrade -yq && apt-get install -yq \
+#     gcc \
+#     g++ \
+#     make \
+#     wget \
+#     libgl1 \
+#     libglib2.0-0 \
+#     git \
+#     libgl1-mesa-glx \
+#     # Add any other packages you need here
+#     && rm -rf /var/lib/apt/lists/*
+
+# # Copy only requirements.txt first to leverage Docker cache
+WORKDIR /stable-diffusion-webui
+COPY requirements.txt /stable-diffusion-webui/
+RUN pip install -r requirements.txt --no-cache-dir
+COPY . /stable-diffusion-webui/
+ENV TORCH_COMMAND="pip install loguru --no-cache-dir"
+ENV PYTHONUNBUFFERED=1
+RUN echo "Dry-Run"
+RUN python3 launch.py --skip-torch-cuda-test --exit
+RUN echo "Final-Run"
+RUN rm -rf models
+RUN rm -rf outputs
+ENV PYTHONUNBUFFERED=1
+RUN pip install opencv-python --upgrade
+ENTRYPOINT ["python3", "launch.py", "--skip-torch-cuda-test", "--listen", "--enable-insecure-extension-access", "--api", "--cors-allow-origins", "http://localhost:5173"]
+

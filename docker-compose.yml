@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  sd-webui:
+    image: "lfnovo/sd-webui2"
+    restart: unless-stopped
+    environment:
+      TORCH_COMMAND: "pip install torch torchvision"
+    volumes:
+      - /Users/lfnovo/gpu/stable-diffusion-webui/models:/app/models
+      - /Users/lfnovo/gpu/stable-diffusion-webui/outputs:/app/outputs
+    ports:
+      - "7860:7860"
+      - "7861:7861"
